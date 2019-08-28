@@ -74,12 +74,15 @@ def relevance_ranking():
 	global docs
 	Docs = sorted(docs.items(), key = operator.itemgetter(1), reverse = True)
 	Docs = Docs[:min(10, len(docs))]
-	for doc in Docs:
+	ops = list()
+    for doc in Docs:
 		t = int(doc_offset[int(doc[0])])
 		document_titles.seek(t)
 		new_string = document_titles.readline().strip()
 		output = string.replace(new_string, ' ', '_')
-		print ("https://en.wikipedia.org/wiki/" + output)
+		# print ("https://en.wikipedia.org/wiki/" + output)
+        ops.append(output)
+    return ops
 
 # make a list of all the stopwords.
 with open('stopwords.txt', 'r') as file :
@@ -96,11 +99,16 @@ mapping[2] = index_term_mapping(2)
 create_offset()
 
 inpf = open(inputfile, 'r')
-outf = open(outputfile, 'r')
+outf = open(outputfile, 'w')
 
-while True:
-	query = raw_input("Query-> ").strip('\n').lower()
-	start = time.time()
+queries = list()
+
+for line in inpf.readlines():
+    queries.append(line.strip('\n').lower())
+
+for query in queries:
+	# query = raw_input("Query-> ").strip('\n').lower()
+	# start = time.time()
 	flag = 0
 	docs = defaultdict(float)
 	if ("t:" in query) or ("d:" in query) or ("c:" in query) or ("i:" in query) or ("e:" in query):
@@ -125,8 +133,15 @@ while True:
 			q = ps.stem(q)
 			single_field_query(q)
 
-	relevance_ranking()
-	print ("Query time:", time.time() - start, "seconds.")
+	outputs = relevance_ranking()
+    results = '\n'.join(outputs)
+    outf.write(results)
+    outf.write('\n')
+	# print ("Query time:", time.time() - start, "seconds.")
+
 
 for i in range(3):
 	inverted_index_file[i].close()
+
+inpf.close()
+outf.close()
